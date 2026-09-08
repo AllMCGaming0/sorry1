@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A letter for you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     EDIT YOUR MESSAGE IN THE <script> AT THE BOTTOM OF THIS FILE.
+     Look for the block that starts with:  const CARD = {
+     ============================================================ */
+
+  :root{
+    --night:   #1c1222;   /* deepest twilight            */
+    --dusk:    #3a2140;   /* plum                        */
+    --wine:    #55283f;   /* warm lower glow             */
+    --rose:    #e8a3ac;   /* soft petals / accents       */
+    --blush:   #f6d3cf;   /* light rose                  */
+    --gold:    #e9c07c;   /* candle-gold wax seal        */
+    --paper:   #fbf4ee;   /* the letter                  */
+    --paper-2: #f3e7dd;   /* letter shadow tone          */
+    --ink:     #4a3340;   /* text on the letter          */
+    --ink-soft:#6b5560;
+    --sans: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --hand: "Caveat", "Segoe Script", cursive;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ height:100%; background:#241826; }
+
+  body{
+    font-family:var(--sans);
+    color:var(--paper);
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #4a2b4e 0%, transparent 60%),
+      radial-gradient(900px 900px at 50% 120%, var(--wine) 0%, transparent 55%),
+      linear-gradient(180deg, var(--night) 0%, var(--dusk) 55%, #2a1830 100%);
+    background-color:#241826;
+    background-attachment:fixed;
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- falling petals ---------- */
+  .sky{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .petal{
+    position:absolute; top:-8vh;
+    width:14px; height:14px;
+    color:var(--rose); opacity:0;
+    animation:fall linear infinite;
+    will-change:transform, opacity;
+  }
+  .petal svg{ width:100%; height:100%; display:block; }
+  @keyframes fall{
+    0%   { transform:translateY(-10vh) translateX(0) rotate(0deg);   opacity:0; }
+    10%  { opacity:.75; }
+    90%  { opacity:.6; }
+    100% { transform:translateY(110vh) translateX(40px) rotate(320deg); opacity:0; }
+  }
+
+  /* ---------- shared card wrap ---------- */
+  .stage{
+    position:relative; z-index:2;
+    width:min(640px, 92vw);
+    padding:32px 18px 56px;
+    display:flex; flex-direction:column; align-items:center;
+  }
+
+  /* ---------- scene 1: envelope cover ---------- */
+  .cover{
+    display:flex; flex-direction:column; align-items:center; gap:26px;
+    transition:opacity .9s ease, transform .9s ease;
+  }
+  .cover.gone{ opacity:0; transform:translateY(-26px) scale(.96); pointer-events:none; }
+
+  .envelope{
+    position:relative;
+    width:min(340px, 82vw);
+    height:calc(min(340px, 82vw) * .66);
+    cursor:pointer;
+    filter:drop-shadow(0 26px 40px rgba(0,0,0,.45));
+    border:none; background:transparent; padding:0;
+    -webkit-tap-highlight-color:transparent; user-select:none;
+  }
+  .envelope:focus-visible{ outline:3px solid var(--gold); outline-offset:10px; border-radius:8px; }
+
+  .env-body{
+    position:absolute; inset:0;
+    background:linear-gradient(160deg, #f7ede4, #efdccd);
+    border-radius:10px;
+  }
+  /* the two side triangles + bottom flap that hold the letter */
+  .env-pocket{
+    position:absolute; inset:0; border-radius:10px; overflow:hidden;
+  }
+  .env-pocket::before{ /* bottom flap */
+    content:""; position:absolute; left:0; right:0; bottom:0; top:0;
+    background:linear-gradient(180deg, #f2e0d2 0%, #e7d0be 100%);
+    clip-path:polygon(0 42%, 50% 100%, 100% 42%, 100% 100%, 0 100%);
+  }
+  .env-pocket::after{ /* subtle inner shading */
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(0,0,0,.06), transparent 40%);
+  }
+  .env-flap{
+    position:absolute; left:0; right:0; top:0;
+    height:60%;
+    background:linear-gradient(160deg, #f7ece2, #ecd8c8);
+    clip-path:polygon(0 0, 100% 0, 50% 100%);
+    transform-origin:top center;
+    transition:transform .85s cubic-bezier(.6,.02,.2,1);
+    z-index:5;
+    backface-visibility:hidden;
+  }
+  .seal{
+    position:absolute; left:50%; top:52%;
+    width:76px; height:76px; margin:-38px 0 0 -38px;
+    border-radius:50%;
+    background:radial-gradient(circle at 34% 30%, #d76b73, #a83246 46%, #7c1f30 100%);
+    box-shadow:0 8px 18px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.20), inset 0 -4px 9px rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center;
+    z-index:20;
+    animation:pulse 2.8s ease-in-out infinite;
+  }
+  .seal svg{ width:36px; height:36px; color:#f7ddd6; }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 8px 18px rgba(0,0,0,.45), 0 0 0 0 rgba(215,107,115,.55), inset 0 0 0 3px rgba(255,255,255,.20), inset 0 -4px 9px rgba(0,0,0,.35);}
+    50%    { box-shadow:0 8px 22px rgba(0,0,0,.5), 0 0 0 16px rgba(215,107,115,0), inset 0 0 0 3px rgba(255,255,255,.20), inset 0 -4px 9px rgba(0,0,0,.35);}
+  }
+
+  .cover-title{
+    font-family:var(--hand);
+    font-size:clamp(30px, 7vw, 44px);
+    color:var(--blush);
+    line-height:1;
+  }
+  .cover-hint{
+    font-style:italic;
+    font-size:clamp(16px,4.4vw,19px);
+    letter-spacing:.02em;
+    color:rgba(246,211,207,.8);
+    margin-top:-12px;
+  }
+
+  /* opened state: flap swings up & back */
+  body.opened .env-flap{ transform:rotateX(180deg); z-index:1; }
+  body.opened .seal{ animation:none; opacity:0; transition:opacity .4s ease; }
+
+  /* ---------- scene 2: the letter ---------- */
+  .letter-wrap{
+    position:relative;
+    width:min(600px, 92vw);
+    display:none;
+    opacity:0; transform:translateY(40px) scale(.98);
+    pointer-events:none;
+    transition:opacity 1s ease, transform 1s cubic-bezier(.2,.7,.2,1);
+  }
+  .letter-wrap.show{ opacity:1; transform:none; pointer-events:auto; }
+
+  .letter{
+    position:relative;
+    background:
+      linear-gradient(180deg, var(--paper), var(--paper-2));
+    color:var(--ink);
+    border-radius:6px;
+    padding:clamp(30px,7vw,58px) clamp(24px,6vw,54px) clamp(34px,7vw,56px);
+    box-shadow:0 40px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.6);
+    text-align:left;
+  }
+  /* faint ruled paper feel */
+  .letter::before{
+    content:""; position:absolute; left:0; right:0; top:0; height:8px;
+    background:linear-gradient(90deg, transparent, rgba(0,0,0,.05), transparent);
+    border-radius:6px 6px 0 0;
+  }
+
+  .greeting{
+    font-family:var(--hand);
+    font-size:clamp(30px,7.5vw,46px);
+    color:#8a4a4f;
+    margin-bottom:.35em;
+    line-height:1;
+  }
+  .line{
+    font-size:clamp(18px,4.7vw,22px);
+    line-height:1.72;
+    color:var(--ink);
+    margin:0 0 1.05em;
+    opacity:0; transform:translateY(12px);
+    transition:opacity .8s ease, transform .8s ease;
+  }
+  .letter.reveal .line{ opacity:1; transform:none; }
+  .letter.reveal .line:nth-child(2){ transition-delay:.15s; }
+  .letter.reveal .line:nth-child(3){ transition-delay:.55s; }
+  .letter.reveal .line:nth-child(4){ transition-delay:.95s; }
+  .letter.reveal .line:nth-child(5){ transition-delay:1.35s; }
+  .letter.reveal .line:nth-child(6){ transition-delay:1.75s; }
+
+  .closing{
+    margin-top:1.6em;
+    font-size:clamp(17px,4.4vw,20px);
+    color:var(--ink-soft);
+    font-style:italic;
+    opacity:0; transform:translateY(12px);
+    transition:opacity .8s ease 2s, transform .8s ease 2s;
+  }
+  .letter.reveal .closing{ opacity:1; transform:none; }
+  .signature{
+    font-family:var(--hand);
+    font-size:clamp(30px,7vw,42px);
+    color:#8a4a4f;
+    line-height:1;
+    margin-top:.1em;
+    opacity:0; transform:translateY(12px);
+    transition:opacity .8s ease 2.25s, transform .8s ease 2.25s;
+  }
+  .letter.reveal .signature{ opacity:1; transform:none; }
+
+  /* ---------- forgive interaction ---------- */
+  .ask{
+    margin-top:34px; text-align:center; min-height:64px;
+    opacity:0; transition:opacity .8s ease 2.5s;
+  }
+  .letter.reveal ~ .ask, .ask.show{ opacity:1; }
+  .forgive{
+    font-family:var(--sans);
+    font-size:clamp(19px,5vw,23px);
+    color:#fff;
+    background:linear-gradient(160deg, #c56b74, #9c4450);
+    border:none; border-radius:999px;
+    padding:15px 34px;
+    cursor:pointer;
+    letter-spacing:.01em;
+    box-shadow:0 14px 30px rgba(156,68,80,.5);
+    transition:transform .25s ease, box-shadow .25s ease, opacity .5s ease;
+  }
+  .forgive:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 18px 38px rgba(156,68,80,.6); }
+  .forgive:focus-visible{ outline:3px solid var(--gold); outline-offset:4px; }
+  .forgive:active{ transform:translateY(0) scale(.99); }
+
+  .final-note{
+    font-family:var(--sans);
+    font-size:clamp(19px,4.9vw,23px);
+    font-style:italic;
+    color:var(--blush);
+    max-width:30ch; margin:0 auto;
+    opacity:0; transform:translateY(10px);
+    transition:opacity .9s ease, transform .9s ease;
+  }
+  .final-note.show{ opacity:1; transform:none; }
+
+  /* ---------- celebration on 'forgive' ---------- */
+  .joy{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    opacity:0; transition:opacity 1.3s ease;
+    background:
+      radial-gradient(90vw 70vh at 50% 118%, rgba(200,107,116,.5), transparent 70%),
+      radial-gradient(70vw 60vh at 50% -12%, rgba(233,192,124,.38), transparent 70%),
+      radial-gradient(50vw 50vh at 50% 50%, rgba(255,209,145,.14), transparent 70%);
+  }
+  body.celebrate .joy{ opacity:1; }
+
+  .celebration{ position:fixed; inset:0; z-index:60; pointer-events:none; overflow:hidden; }
+
+  .confetti{
+    position:absolute; top:-12vh; border-radius:2px;
+    animation:confetti-fall linear forwards; will-change:transform, opacity;
+  }
+  @keyframes confetti-fall{
+    0%  { transform:translate3d(0,-12vh,0) rotate(0);   opacity:0; }
+    8%  { opacity:1; }
+    85% { opacity:1; }
+    100%{ transform:translate3d(var(--sway,0px),118vh,0) rotate(var(--rot,540deg)); opacity:0; }
+  }
+
+  .floatheart{
+    position:absolute; bottom:-12vh; width:16px; height:16px;
+    animation:heart-rise ease-in forwards; will-change:transform, opacity;
+  }
+  .floatheart svg{ width:100%; height:100%; display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,.25)); }
+  @keyframes heart-rise{
+    0%  { transform:translate3d(0,0,0) scale(.4);            opacity:0; }
+    12% { opacity:1; }
+    88% { opacity:1; }
+    100%{ transform:translate3d(var(--drift,0px),-122vh,0) scale(1); opacity:0; }
+  }
+
+  .spark{
+    position:absolute; width:12px; height:12px; border-radius:50%;
+    background:radial-gradient(circle, #fff 0%, rgba(255,235,190,.7) 35%, rgba(255,255,255,0) 70%);
+    animation:spark ease-in-out forwards; will-change:transform, opacity;
+  }
+  @keyframes spark{
+    0%  { transform:scale(0);   opacity:0; }
+    45% { transform:scale(1.4); opacity:1; }
+    100%{ transform:scale(0);   opacity:0; }
+  }
+
+  .joy-title{
+    display:none;
+    font-family:var(--hand);
+    font-size:clamp(30px,8vw,54px);
+    color:#ffd9a8;
+    line-height:1.05; margin:0 0 .3em;
+    text-shadow:0 4px 26px rgba(233,160,124,.55);
+    opacity:0; transform:scale(.55);
+    transition:opacity .55s ease, transform .7s cubic-bezier(.2,1.55,.35,1);
+  }
+  .joy-title.show{ opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    .petal{ display:none; }
+    .seal{ animation:none; }
+    .cover,.letter-wrap,.line,.closing,.ask,.final-note{ transition:opacity .001s; }
+    .env-flap{ transition:transform .001s; }
+    .joy{ transition:opacity .4s ease; }
+    .joy-title{ transform:none; transition:opacity .4s ease; }
+    .joy-title.show{ transform:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="sky" id="sky" aria-hidden="true"></div>
+  <div class="joy" id="joy" aria-hidden="true"></div>
+
+  <div class="stage">
+    <!-- SCENE 1 -->
+    <div class="cover" id="cover">
+      <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="Open the letter">
+        <span class="env-body"></span>
+        <span class="env-pocket"></span>
+        <span class="env-flap"></span>
+        <span class="seal" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.8-10-9.3C.4 8.9 2 5.5 5.2 5.5c1.9 0 3.2 1.1 3.8 2 .6-.9 1.9-2 3.8-2 3.2 0 4.8 3.4 3.2 6.2C19.5 16.2 12 21 12 21z"/></svg>
+        </span>
+      </div>
+      <div class="cover-title" id="coverTitle">For you</div>
+      <div class="cover-hint">tap the seal to open</div>
+    </div>
+
+    <!-- SCENE 2 -->
+    <div class="letter-wrap" id="letterWrap" aria-hidden="true">
+      <div class="letter" id="letter">
+        <div class="greeting" id="greeting">Dear you,</div>
+        <!-- message lines injected here -->
+        <div class="closing" id="closing"></div>
+        <div class="signature" id="signature"></div>
+      </div>
+
+      <div class="ask" id="ask">
+        <h2 class="joy-title" id="joyTitle"></h2>
+        <button class="forgive" id="forgive"></button>
+        <p class="final-note" id="finalNote"></p>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =====================================================================
+   ✏️  PERSONALIZE YOUR CARD HERE
+   Change the names and the message below to make it yours.
+   Each string in "lines" becomes one paragraph of the letter.
+   ===================================================================== */
+const CARD = {
+  herName:  "",                 // e.g. "Ananya"  (leave "" for "my love")
+  yourName: "",                 // e.g. "Raj"     (leave "" for a plain sign-off)
+
+  lines: [
+    "I’m sorry. When you asked me after school why I was sad and I went quiet instead of answering, I hurt you — and seeing you upset and crying because of my silence is something I can’t stop thinking about. You were only trying to understand me, and I shut you out. I’m so sorry for that.",
+    "The truth is I wasn’t upset with you — I was hurting inside. Hugging someone that closely is something that feels like it belongs only to you, to us, and afterwards I just felt low and didn’t know how to say it out loud. So I went silent, and I understand now that my silence said all the wrong things.",
+    "I should have been honest and told you what was in my heart, instead of leaving you worried and guessing. You didn’t deserve to be pushed away like that. You deserve me opening up to you, not closing the door on you.",
+    "You mean everything to me, and I don’t want one quiet, hard moment to turn into distance between us. Can we talk about it, calmly, together? I promise that next time I’ll tell you what I’m feeling instead of going silent."
+  ],
+
+  closing:       "With all my heart,",
+  signature:     "",             // leave "" to reuse yourName
+  forgiveButton: "Will you forgive me?",
+  celebrateTitle: "You just made me the happiest.",
+  finalNote:     "Thank you for reading to the end. Whenever you’re ready, I’ll be right here — and I’ll always choose being honest with you."
+};
+/* ===================================================================== */
+
+(function(){
+  const her  = CARD.herName.trim();
+  const you  = CARD.yourName.trim();
+
+  // greeting + cover title
+  document.getElementById("greeting").textContent = her ? ("Dear " + her + ",") : "My love,";
+  document.getElementById("coverTitle").textContent = her ? ("For " + her) : "For you";
+
+  // message lines
+  const letter = document.getElementById("letter");
+  const closingEl = document.getElementById("closing");
+  const frag = document.createDocumentFragment();
+  CARD.lines.forEach(function(t){
+    const p = document.createElement("p");
+    p.className = "line";
+    p.textContent = t;
+    frag.insertBefore(p, null);
+  });
+  letter.insertBefore(frag, closingEl);
+
+  closingEl.textContent = CARD.closing;
+  const sig = (CARD.signature.trim() || you);
+  document.getElementById("signature").textContent = sig ? sig : "";
+  if(!sig){ document.getElementById("signature").style.display = "none"; }
+
+  document.getElementById("forgive").textContent = CARD.forgiveButton;
+  document.getElementById("joyTitle").textContent = CARD.celebrateTitle || "";
+  document.getElementById("finalNote").textContent = CARD.finalNote;
+
+  // ---- petals ----
+  const sky = document.getElementById("sky");
+  const petalSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.8-10-9.3C.4 8.9 2 5.5 5.2 5.5c1.9 0 3.2 1.1 3.8 2 .6-.9 1.9-2 3.8-2 3.2 0 4.8 3.4 3.2 6.2C19.5 16.2 12 21 12 21z"/></svg>';
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!reduce){
+    for(let i=0;i<16;i++){
+      const p = document.createElement("div");
+      p.className = "petal";
+      const size = 9 + Math.random()*14;
+      p.style.width = p.style.height = size + "px";
+      p.style.left = Math.random()*100 + "vw";
+      p.style.animationDuration = (9 + Math.random()*9) + "s";
+      p.style.animationDelay = (-Math.random()*12) + "s";
+      p.style.opacity = 0.5 + Math.random()*0.4;
+      p.innerHTML = petalSVG;
+      sky.appendChild(p);
+    }
+  }
+
+  // ---- open the envelope ----
+  const cover = document.getElementById("cover");
+  const wrap  = document.getElementById("letterWrap");
+  const ask   = document.getElementById("ask");
+  let opened = false;
+
+  function open(){
+    if(opened) return; opened = true;
+    wrap.setAttribute("aria-hidden","false");
+    document.body.classList.add("opened");            // flap swings, seal fades
+    cover.classList.add("gone");                      // fade the cover out
+    setTimeout(function(){
+      cover.style.display = "none";                   // remove cover from the layout
+      wrap.style.display = "block";                   // bring the letter in (now centered)
+      void wrap.offsetWidth;                          // force reflow so the transition runs
+      wrap.classList.add("show");                     // fade + slide the letter in
+      window.scrollTo({ top: 0, behavior: "auto" });
+      setTimeout(function(){ letter.classList.add("reveal"); }, 220);
+      setTimeout(function(){ ask.classList.add("show"); }, 2600);
+    }, 950);
+  }
+  const envEl = document.getElementById("envelope");
+  envEl.addEventListener("click", open);
+  envEl.addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); open(); }
+  });
+
+  // ---- forgive button: a burst of happiness ----
+  const heartSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.8-10-9.3C.4 8.9 2 5.5 5.2 5.5c1.9 0 3.2 1.1 3.8 2 .6-.9 1.9-2 3.8-2 3.2 0 4.8 3.4 3.2 6.2C19.5 16.2 12 21 12 21z"/></svg>';
+  const joyColors = ['#e8a3ac','#e9c07c','#c56b74','#f6d3cf','#f3d191','#ffd9e0','#ffffff'];
+
+  function addConfetti(layer, n){
+    for(let i=0;i<n;i++){
+      const c = document.createElement('i');
+      c.className = 'confetti';
+      c.style.left = Math.random()*100 + 'vw';
+      c.style.width = (7 + Math.random()*7) + 'px';
+      c.style.height = (4 + Math.random()*7) + 'px';
+      c.style.background = joyColors[(Math.random()*joyColors.length)|0];
+      if(Math.random() < 0.35) c.style.borderRadius = '50%';
+      c.style.animationDuration = (2.8 + Math.random()*2.6) + 's';
+      c.style.animationDelay = (Math.random()*0.8) + 's';
+      c.style.setProperty('--rot', (Math.random()*900 - 450) + 'deg');
+      c.style.setProperty('--sway', (Math.random()*160 - 80) + 'px');
+      layer.appendChild(c);
+    }
+  }
+  function addHearts(layer, n){
+    for(let i=0;i<n;i++){
+      const h = document.createElement('div');
+      h.className = 'floatheart';
+      const s = 0.5 + Math.random()*1.3;
+      h.style.left = Math.random()*100 + 'vw';
+      h.style.width = (16*s) + 'px';
+      h.style.height = (16*s) + 'px';
+      h.style.color = joyColors[(Math.random()*joyColors.length)|0];
+      h.style.animationDuration = (3.2 + Math.random()*2.8) + 's';
+      h.style.animationDelay = (Math.random()*1.6) + 's';
+      h.style.setProperty('--drift', (Math.random()*140 - 70) + 'px');
+      h.innerHTML = heartSVG;
+      layer.appendChild(h);
+    }
+  }
+  function addSparks(layer, n){
+    for(let i=0;i<n;i++){
+      const sp = document.createElement('i');
+      sp.className = 'spark';
+      sp.style.left = Math.random()*100 + 'vw';
+      sp.style.top = Math.random()*100 + 'vh';
+      sp.style.animationDuration = (1.1 + Math.random()*1.4) + 's';
+      sp.style.animationDelay = (Math.random()*2.4) + 's';
+      layer.appendChild(sp);
+    }
+  }
+
+  document.getElementById("forgive").addEventListener("click", function(){
+    const btn = this;
+    if(btn.dataset.done) return; btn.dataset.done = "1";
+
+    document.body.classList.add("celebrate");   // warm glow blooms in
+
+    if(!reduce){
+      const layer = document.createElement("div");
+      layer.className = "celebration";
+      document.body.appendChild(layer);
+      addConfetti(layer, 150);
+      addHearts(layer, 44);
+      addSparks(layer, 32);
+      setTimeout(function(){ addConfetti(layer, 90); addHearts(layer, 28); }, 900);
+      setTimeout(function(){ addConfetti(layer, 70); addSparks(layer, 20); }, 1900);
+      setTimeout(function(){ layer.remove(); }, 9500);
+    }
+
+    // reveal the joyful message
+    btn.style.opacity = "0";
+    setTimeout(function(){
+      btn.style.display = "none";
+      const jt = document.getElementById("joyTitle");
+      jt.style.display = "block";
+      void jt.offsetWidth;
+      jt.classList.add("show");
+      document.getElementById("finalNote").classList.add("show");
+    }, 450);
+  });
+})();
+</script>
+</body>
+</html>
